@@ -42,7 +42,7 @@ func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request)
 		FROM participants
 		INNER JOIN users ON participants.user_id = users.id
 		WHERE participants.user_id != $1
-			participants.conversation_id = $2
+			AND participants.conversation_id = $2
 		LIMIT 1
 	`, authUserID, conversationID).Scan(
 		&otherUser.ID,
