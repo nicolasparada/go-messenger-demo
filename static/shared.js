@@ -80,6 +80,9 @@ export function loadEventSourcePolyfill() {
 
 let originalTitle
 
+/**
+ * @param {string} msg
+ */
 export function flashTitle(msg) {
     if (originalTitle === undefined) {
         originalTitle = document.title
