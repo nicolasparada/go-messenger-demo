@@ -12,7 +12,7 @@ Source code of the blog posts "Building a Messenger App":
 - [Part 8: Home Page](https://nicolasparada.netlify.com/posts/go-messenger-home-page/)
 - [Part 9: Conversation Page](https://nicolasparada.netlify.com/posts/go-messenger-conversation-page/)
 
-[DEMO](https://go-messenger-demo.herokuapp.com/).
+[DEMO](https://go-messenger-demo.herokuapp.com/)
 
 Get the code:
 ```bash
