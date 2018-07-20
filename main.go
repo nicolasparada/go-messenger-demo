@@ -94,6 +94,7 @@ func main() {
 	router.HandleFunc("POST", "/api/conversations", requireJSON(guard(createConversation)))
 	router.HandleFunc("GET", "/api/conversations", guard(getConversations))
 	router.HandleFunc("GET", "/api/conversations/:conversation_id", guard(getConversation))
+	router.HandleFunc("GET", "/api/conversations/:conversation_id/other_participant", guard(getOtherParticipantFromConversation))
 	router.HandleFunc("POST", "/api/conversations/:conversation_id/messages", requireJSON(guard(createMessage)))
 	router.HandleFunc("GET", "/api/conversations/:conversation_id/messages", guard(getMessages))
 	router.HandleFunc("GET", "/api/messages", guard(subscribeToMessages))

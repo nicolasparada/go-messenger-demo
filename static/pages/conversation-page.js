@@ -3,10 +3,10 @@ import http from '../http.js';
 import { ago, avatar, escapeHTML, linkify, loadEventSourcePolyfill } from '../shared.js';
 
 export default async function conversationPage(conversationId) {
-    let conversation, messages
+    let otherParticipant, messages
     try {
-        [conversation, messages] = await Promise.all([
-            getConversation(conversationId),
+        [otherParticipant, messages] = await Promise.all([
+            getOtherParticipantFromConversation(conversationId),
             getMessages(conversationId),
         ])
     } catch (err) {
@@ -24,8 +24,8 @@ export default async function conversationPage(conversationId) {
             <div class="chat-heading">
                 <a href="/" id="back-link" class="back-link">← Back</a>
                 <div class="avatar-wrapper">
-                    ${avatar(conversation.otherParticipant)}
-                    <span>${conversation.otherParticipant.username}</span>
+                    ${avatar(otherParticipant)}
+                    <span>${otherParticipant.username}</span>
                 </div>
             </div>
             <ol id="messages" class="messages">${showLoadMoreButton
@@ -59,10 +59,10 @@ export default async function conversationPage(conversationId) {
 }
 
 /**
- * @param {string} id
+ * @param {string} conversationId
  */
-function getConversation(id) {
-    return http.get('/api/conversations/' + id)
+function getOtherParticipantFromConversation(conversationId) {
+    return http.get(`/api/conversations/${conversationId}/other_participant`)
 }
 
 /**
