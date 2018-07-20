@@ -1,0 +1,280 @@
+:root {
+    --color: white;
+    --alt-color: black;
+    --muted-color: #999;
+    --accent-color: #ceff7b;
+    --bgcolor: #1f1f1f;
+    --alt-bgcolor: white;
+    --root-bgcolor: black;
+    --hover-bgcolor: #333;
+    --active-bgcolor: #666;
+
+    background-color: var(--root-bgcolor);
+    box-sizing: border-box;
+    color: var(--color);
+    font-family: sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+*,
+::before,
+::after {
+    box-sizing: inherit;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+}
+
+.container {
+    width: calc(100% - 2rem);
+    max-width: 65ch;
+    margin: 0 auto;
+}
+
+h2 {
+    margin: 1rem 0;
+}
+
+img {
+    max-width: 100%;
+}
+
+button,
+input,
+textarea {
+    color: inherit;
+    font: inherit;
+}
+
+button {
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.js-focus-visible :focus:not(.focus-visible) {
+    outline: none;
+}
+
+a {
+    color: var(--accent-color);
+}
+
+.js-focus-visible :focus:not(.focus-visible) {
+    outline: none;
+}
+
+button,
+input {
+    height: 2rem;
+    padding: 0 1rem;
+    border: none;
+    background-color: var(--bgcolor);
+    border-radius: 1rem;
+}
+
+button:hover,
+input:hover {
+    background-color: var(--hover-bgcolor);
+}
+
+button:active {
+    background-color: var(--active-bgcolor);
+}
+
+button.focus-visible:focus,
+input:focus {
+    background-color: var(--alt-bgcolor);
+    color: var(--alt-color);
+    outline: none;
+}
+
+time {
+    font-size: .6875rem;
+    color: var(--muted-color);
+}
+
+.avatar-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.avatar-wrapper > * + * {
+    margin-left: .5rem;
+}
+
+.avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+}
+
+figure.avatar {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    line-height: 3rem;
+    color: var(--alt-color);
+    background-color: var(--accent-color);
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+figure.avatar::after {
+    content: attr(data-initial);
+}
+
+.login-form {
+    margin-bottom: 1rem;
+}
+
+.profile {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--bgcolor);
+}
+
+.logout-button {
+    margin-left: auto;
+}
+
+.conversations {
+    margin: 0;
+    margin-top: 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.conversation {
+    border-radius: .6rem;
+}
+
+.conversation + .conversation {
+    margin-top: .1875rem;
+}
+
+.conversation:hover {
+    background-color: var(--bgcolor);
+}
+
+.conversation.has-unread-messages {
+    border-right: .6rem solid var(--accent-color);
+    background-color: var(--bgcolor);
+}
+
+.conversation a {
+    padding: .5rem 1rem;
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.conversation p {
+    margin: 0;
+}
+
+.message-preview {
+    display: flex;
+    align-items: center;
+    margin-top: .5rem;
+}
+
+.message-preview p {
+    flex-grow: 1;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: .5rem;
+}
+
+.chat {
+    height: 100%;
+    display: grid;
+    grid-template-rows: 4rem auto 3rem;
+}
+
+.chat-heading {
+    display: flex;
+    align-items: center;
+}
+
+.chat-heading > * + * {
+    margin-left: .5rem;
+}
+
+.back-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.messages {
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    padding-top: 3rem;
+}
+
+.load-more {
+    align-self: center;
+    margin-bottom: 1rem;
+}
+
+.message {
+    max-width: calc(100% - 3rem);
+}
+
+.message + .message {
+    margin-bottom: .1875rem;
+}
+
+.message:not(.owned) {
+    align-self: flex-start;
+}
+
+.message.owned {
+    align-self: flex-end;
+    text-align: right;
+}
+
+.buble {
+    padding: .5rem 1rem;
+    background-color: var(--bgcolor);
+    border-radius: 1rem;
+}
+
+.message:not(.owned) .buble {
+    border-top-left-radius: 0;
+}
+
+.message.owned .buble {
+    border-bottom-right-radius: 0;
+}
+
+.buble p {
+    margin: 0;
+    text-align: left;
+}
+
+.message:not(.owned) + .message:not(.owned) time,
+.message.owned + .message.owned time {
+    display: none;
+}
+
+.message-form {
+    display: flex;
+    align-items: center;
+}
+
+.message-form input {
+    width: 100%;
+    margin-right: .5rem;
+}

@@ -1,0 +1,4 @@
+cockroach-data
+.env
+*.exe
+*.http
