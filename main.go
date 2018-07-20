@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/securecookie"
 	"github.com/joho/godotenv"
@@ -98,10 +101,27 @@ func main() {
 	router.HandleFunc("*", "/api/...", http.NotFound)
 	router.Handle("GET", "/...", http.FileServer(SPAFileSystem{http.Dir("static")}))
 
+	s := http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           router,
+		ReadHeaderTimeout: time.Second * 5,
+		IdleTimeout:       time.Second * 30,
+	}
+
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, os.Interrupt)
+		<-quit
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		if err := s.Shutdown(ctx); err != nil {
+			log.Fatalf("could not shutdown server: %v\n", err)
+		}
+	}()
+
 	log.Printf("accepting connections on port %d\n", port)
 	log.Printf("starting server at %s\n", origin.String())
-	addr := fmt.Sprintf(":%d", port)
-	if err = http.ListenAndServe(addr, router); err != nil {
+	if err := s.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("could not start server: %v\n", err)
 	}
 }
