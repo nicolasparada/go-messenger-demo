@@ -77,3 +77,16 @@ export function loadScript(src) {
 export function loadEventSourcePolyfill() {
     return loadScript('https://unpkg.com/event-source-polyfill@0.0.12/src/eventsource.min.js')
 }
+
+let originalTitle
+
+export function flashTitle(msg) {
+    if (originalTitle === undefined) {
+        originalTitle = document.title
+    }
+
+    document.title = `${msg} | ${originalTitle}`
+    addEventListener('focus', () => {
+        document.title = originalTitle
+    }, { once: true })
+}

@@ -1,6 +1,6 @@
 import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.6.0/router.js';
 import http from '../http.js';
-import { ago, avatar, escapeHTML, linkify, loadEventSourcePolyfill } from '../shared.js';
+import { ago, avatar, escapeHTML, flashTitle, linkify, loadEventSourcePolyfill } from '../shared.js';
 
 export default async function conversationPage(conversationId) {
     let otherParticipant, messages
@@ -199,6 +199,8 @@ async function subscribeToMessages(cb) {
  */
 function messageArriver(conversationId) {
     return message => {
+        flashTitle(message.content.substr(0, 20) + '...')
+
         if (message.conversationId !== conversationId) {
             return
         }
