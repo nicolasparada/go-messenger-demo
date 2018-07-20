@@ -195,7 +195,7 @@ func getConversation(w http.ResponseWriter, r *http.Request) {
 	var otherParticipant User
 	if err := db.QueryRowContext(ctx, `
 		SELECT
-			IFNULL(auth_user.messages_read_at < messages.created_at, false) AS has_unread_messages,
+			COALESCE(auth_user.messages_read_at < messages.created_at, false) AS has_unread_messages,
 			other_users.id,
 			other_users.username,
 			other_users.avatar_url
@@ -218,6 +218,7 @@ func getConversation(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Conversation not found", http.StatusNotFound)
 	} else if err != nil {
 		respondError(w, fmt.Errorf("could not query conversation: %v", err))
+		return
 	}
 
 	conversation.ID = conversationID
