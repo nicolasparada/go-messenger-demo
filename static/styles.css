@@ -131,10 +131,6 @@ figure.avatar::after {
     content: attr(data-initial);
 }
 
-.login-form {
-    margin-bottom: 1rem;
-}
-
 .profile {
     padding: 1rem 0;
     border-bottom: 1px solid var(--bgcolor);
