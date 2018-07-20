@@ -91,7 +91,7 @@ function renderMessage(message) {
     if (message.mine) {
         li.classList.add('owned')
     }
-    li.innerHTML = `
+    li.innerHTML = /*html*/`
         <div class="buble">
             <p>${linkify(escapeHTML(message.content))}</p>
         </div>

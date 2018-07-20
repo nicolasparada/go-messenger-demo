@@ -108,7 +108,7 @@ function renderConversation(conversation) {
     if (conversation.hasUnreadMessages) {
         li.classList.add('has-unread-messages')
     }
-    li.innerHTML = `
+    li.innerHTML = /*html*/`
         <a href="/conversations/${conversation.id}">
             <div class="avatar-wrapper">
                 ${avatar(conversation.otherParticipant)}
