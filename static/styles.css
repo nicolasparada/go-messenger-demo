@@ -211,12 +211,11 @@ figure.avatar::after {
 
 .messages {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     overflow-y: auto;
     margin: 0;
     padding: 0;
     list-style: none;
-    padding-top: 3rem;
 }
 
 .load-more {
@@ -258,11 +257,6 @@ figure.avatar::after {
 .buble p {
     margin: 0;
     text-align: left;
-}
-
-.message:not(.owned) + .message:not(.owned) time,
-.message.owned + .message.owned time {
-    display: none;
 }
 
 .message-form {

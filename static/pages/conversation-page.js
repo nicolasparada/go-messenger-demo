@@ -46,13 +46,12 @@ export default async function conversationPage(conversationId) {
         loadMoreButton.onclick = loadMoreClicker(conversationId)
     }
     const messagesOList = page.getElementById('messages')
-    for (const m of messages) {
-        if (loadMoreButton !== null) {
-            loadMoreButton.parentElement.insertAdjacentElement('beforebegin', renderMessage(m))
-        } else {
-            messagesOList.appendChild(renderMessage(m))
-        }
+    for (const m of messages.reverse()) {
+        messagesOList.appendChild(renderMessage(m))
     }
+    setTimeout(() => {
+        messagesOList.scrollTop = messagesOList.scrollHeight
+    }, 0)
     page.getElementById('message-form').onsubmit = messageSubmitter(conversationId)
     page.addEventListener('disconnect', await subscribeToMessages(messageArriver(conversationId)))
     return page
@@ -116,26 +115,17 @@ function loadMoreClicker(conversationId) {
         })
         button.disabled = false
 
-        const messagesOList = document.getElementById('messages')
-        if (messagesOList !== null) {
-            const lastMessageLI = messagesOList.querySelector('.message:nth-last-child(2)')
-            for (const m of messages) {
-                button.parentElement.insertAdjacentElement('beforebegin', renderMessage(m))
-            }
-            setTimeout(() => {
-                if (lastMessageLI !== null) {
-                    lastMessageLI.scrollIntoView()
-                }
-            }, 0)
+        const buttonParentLI = button.parentElement
+        for (const m of messages) {
+            buttonParentLI.insertAdjacentElement('afterend', renderMessage(m))
         }
 
-
-        const messagesLength = messages.length
-        if (messagesLength !== 25) {
+        if (messages.length !== 25) {
             button.remove()
+            return
         }
 
-        button.dataset['before'] = messages[messagesLength - 1].i
+        button.dataset['before'] = messages[24].i
     }
 }
 
@@ -158,7 +148,10 @@ function messageSubmitter(conversationId) {
             input.value = ''
             const messagesOList = document.getElementById('messages')
             if (messagesOList !== null) {
-                messagesOList.insertAdjacentElement('afterbegin', renderMessage(m))
+                messagesOList.appendChild(renderMessage(m))
+                setTimeout(() => {
+                    messagesOList.scrollTop = messagesOList.scrollHeight
+                }, 0)
             }
         } catch (err) {
             if (err.statusCode === 422) {
@@ -208,7 +201,13 @@ function messageArriver(conversationId) {
         if (messagesOList === null) {
             return
         }
-        messagesOList.insertAdjacentElement('afterbegin', renderMessage(message))
+        const isAtTheBottom = messagesOList.scrollTop + messagesOList.clientHeight === messagesOList.scrollHeight
+        messagesOList.appendChild(renderMessage(message))
+        if (isAtTheBottom) {
+            setTimeout(() => {
+                messagesOList.scrollTop = messagesOList.scrollHeight
+            }, 0)
+        }
         readMessages(message.conversationId)
     }
 }

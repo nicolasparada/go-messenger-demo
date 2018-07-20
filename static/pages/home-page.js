@@ -179,7 +179,7 @@ async function onLoadMoreClick(ev) {
 
     const conversationsOList = document.getElementById('conversations')
     if (conversationsOList !== null) {
-        for (const c of conversations) {
+        for (const c of conversations.reverse()) {
             conversationsOList.appendChild(renderConversation(c))
         }
     }
