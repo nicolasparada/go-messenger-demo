@@ -6,19 +6,21 @@ export default async function callbackPage() {
     const token = url.searchParams.get('token')
     const expiresAt = url.searchParams.get('expires_at')
 
-    if (token === null || expiresAt === null) {
-        alert('Invalid URL')
+    try {
+        if (token === null || expiresAt === null) {
+            throw new Error('Invalid URL')
+        }
+
+        const authUser = await getAuthUser(token)
+
+        localStorage.setItem('auth_user', JSON.stringify(authUser))
+        localStorage.setItem('token', token)
+        localStorage.setItem('expires_at', expiresAt)
+    } catch (err) {
+        alert(err.message)
+    } finally {
         navigate('/', true)
-        return
     }
-
-    const authUser = await getAuthUser(token)
-
-    localStorage.setItem('auth_user', JSON.stringify(authUser))
-    localStorage.setItem('token', token)
-    localStorage.setItem('expires_at', expiresAt)
-
-    location.replace('/')
 }
 
 function getAuthUser(token) {
