@@ -2,8 +2,6 @@ import Router from 'https://unpkg.com/@nicolasparada/router@0.6.0/router.js';
 import { guard } from './auth.js';
 import { importWithCache } from './dynamic-import.js';
 
-let currentPage
-const disconnect = new CustomEvent('disconnect')
 const router = new Router()
 router.handle('/', guard(view('home'), view('access')))
 router.handle('/callback', view('callback'))
@@ -16,13 +14,10 @@ function view(pageName) {
         .then(m => m.default(...args))
 }
 
-async function render(result) {
+async function render(resultPromise) {
     document.body.innerHTML = ''
-    if (currentPage instanceof Node) {
-        currentPage.dispatchEvent(disconnect)
-    }
-    currentPage = await result
-    if (currentPage instanceof Node) {
-        document.body.appendChild(currentPage)
+    const result = await resultPromise
+    if (result instanceof Node) {
+        document.body.appendChild(result)
     }
 }

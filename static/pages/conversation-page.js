@@ -2,60 +2,176 @@ import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.6.0/router.j
 import http from '../http.js';
 import { ago, avatar, escapeHTML, flashTitle, linkify, loadEventSourcePolyfill } from '../shared.js';
 
-export default async function conversationPage(conversationId) {
-    let otherParticipant, messages
-    try {
-        [otherParticipant, messages] = await Promise.all([
-            getOtherParticipantFromConversation(conversationId),
-            getMessages(conversationId),
-        ])
-    } catch (err) {
-        alert(err.message)
-        navigate('/', true)
-        return
+class ConversationPage extends HTMLElement {
+    /**
+     * @param {string} conversationId
+     */
+    constructor(conversationId) {
+        super()
+
+        this.conversationId = conversationId
+
+        this.onBackLinkClick = this.onBackLinkClick.bind(this)
+        this.onLoadMoreClick = this.onLoadMoreClick.bind(this)
+        this.onMessageSubmit = this.onMessageSubmit.bind(this)
+        this.onMessageArrive = this.onMessageArrive.bind(this)
     }
 
-    const messagesLength = messages.length
-    const showLoadMoreButton = messagesLength === 25
-    const lastMessage = messages[messagesLength - 1]
-    const template = document.createElement('template')
-    template.innerHTML = /*html*/`
-        <div class="chat container">
-            <div class="chat-heading">
-                <a href="/" id="back-link" class="back-link">← Back</a>
-                <div class="avatar-wrapper">
-                    ${avatar(otherParticipant)}
-                    <span>${otherParticipant.username}</span>
+    /**
+     * @param {MouseEvent} ev
+     */
+    onBackLinkClick(ev) {
+        ev.preventDefault()
+        history.back()
+    }
+
+    async onLoadMoreClick() {
+        const before = this.loadMoreButton.dataset['before']
+
+        this.loadMoreButton.disabled = true
+        const messages = await getMessages(this.conversationId, before).catch(err => {
+            console.error(err)
+            return []
+        })
+        this.loadMoreButton.disabled = false
+
+        const firstLI = this.loadMoreButton.parentElement
+        for (const m of messages) {
+            firstLI.insertAdjacentElement('afterend', renderMessage(m))
+        }
+
+        if (messages.length !== 25) {
+            this.loadMoreButton.remove()
+            return
+        }
+
+        this.loadMoreButton.dataset['before'] = messages[24].i
+    }
+
+    /**
+     * @param {Event} ev
+     */
+    async onMessageSubmit(ev) {
+        ev.preventDefault()
+
+        this.messageInput.disabled = true
+        this.messageSubmitButton.disabled = true
+
+        try {
+            const m = await createMessage(this.messageInput.value, this.conversationId)
+            this.messageInput.value = ''
+            const messagesOList = document.getElementById('messages')
+            if (messagesOList !== null) {
+                messagesOList.appendChild(renderMessage(m))
+                setTimeout(() => {
+                    messagesOList.scrollTop = messagesOList.scrollHeight
+                }, 0)
+            }
+        } catch (err) {
+            if (err.statusCode === 422) {
+                this.messageInput.setCustomValidity(err.body.errors.content)
+            } else {
+                alert(err.message)
+            }
+        } finally {
+            this.messageInput.disabled = false
+            this.messageSubmitButton.disabled = false
+            setTimeout(() => {
+                this.messageInput.focus()
+            }, 0)
+        }
+    }
+
+    onMessageArrive(message) {
+        flashTitle(message.content.substr(0, 20) + '...')
+
+        if (message.conversationId !== this.conversationId) {
+            return
+        }
+
+        const isAtTheBottom = this.messagesOList.scrollTop + this.messagesOList.clientHeight === this.messagesOList.scrollHeight
+        this.messagesOList.appendChild(renderMessage(message))
+        if (isAtTheBottom) {
+            setTimeout(() => {
+                this.messagesOList.scrollTop = this.messagesOList.scrollHeight
+            }, 0)
+        }
+        readMessages(message.conversationId)
+    }
+
+    async connectedCallback() {
+        let otherParticipant, messages
+        try {
+            [otherParticipant, messages] = await Promise.all([
+                getOtherParticipantFromConversation(this.conversationId),
+                getMessages(this.conversationId),
+            ])
+            this.unsubscribeFromMessages = await subscribeToMessages(this.onMessageArrive)
+        } catch (err) {
+            alert(err.message)
+            navigate('/', true)
+            return
+        }
+
+        const messagesLength = messages.length
+        const showLoadMoreButton = messagesLength === 25
+        const lastMessage = messages[messagesLength - 1]
+
+        const template = document.createElement('template')
+        template.innerHTML = /*html*/`
+            <div class="chat container">
+                <div class="chat-heading">
+                    <a href="/" id="back-link" class="back-link">← Back</a>
+                    <div class="avatar-wrapper">
+                        ${avatar(otherParticipant)}
+                        <span>${otherParticipant.username}</span>
+                    </div>
                 </div>
+                <ol id="messages" class="messages">${showLoadMoreButton
+                ? /*html*/`<li class="load-more">
+                    <button id="load-more-button" data-before="${lastMessage.id}">Load more</button>
+                </li>`
+                : ''}</ol>
+                <form id="message-form" class="message-form">
+                    <input type="text" placeholder="Type something" maxlength="480" required>
+                    <button>Send</button>
+                </form>
             </div>
-            <ol id="messages" class="messages">${showLoadMoreButton
-            ? /*html*/`<li class="load-more">
-                <button id="load-more-button" data-before="${lastMessage.id}">Load more</button>
-            </li>`
-            : ''}</ol>
-            <form id="message-form" class="message-form">
-                <input type="text" placeholder="Type something" maxlength="480" required>
-                <button>Send</button>
-            </form>
-        </div>
-    `
-    const page = template.content
-    page.getElementById('back-link').onclick = onBackLinkClick
-    const loadMoreButton = page.getElementById('load-more-button')
-    if (loadMoreButton !== null) {
-        loadMoreButton.onclick = loadMoreClicker(conversationId)
+        `
+        this.appendChild(template.content)
+        this.backLink = /** @type {HTMLAnchorElement} */ (this.querySelector('#back-link'))
+        this.messagesOList = /** @type {HTMLOListElement} */ (this.querySelector('#messages'))
+        this.loadMoreButton = /** @type {HTMLButtonElement=} */ (this.querySelector('#load-more-button'))
+        this.messageForm = /** @type {HTMLFormElement} */ (this.querySelector('#message-form'))
+        this.messageInput = this.messageForm.querySelector('input')
+        this.messageSubmitButton = this.messageForm.querySelector('button')
+
+        this.backLink.onclick = this.onBackLinkClick
+        this.messageForm.onsubmit = this.onMessageSubmit
+
+        if (showLoadMoreButton) {
+            this.loadMoreButton.onclick = this.onLoadMoreClick
+        }
+
+        for (const m of messages.reverse()) {
+            this.messagesOList.appendChild(renderMessage(m))
+        }
+
+        setTimeout(() => {
+            this.messagesOList.scrollTop = this.messagesOList.scrollHeight
+        }, 0)
     }
-    const messagesOList = page.getElementById('messages')
-    for (const m of messages.reverse()) {
-        messagesOList.appendChild(renderMessage(m))
+
+    disconnectedCallback() {
+        if (typeof this.unsubscribeFromMessages === 'function') {
+            this.unsubscribeFromMessages()
+        }
     }
-    setTimeout(() => {
-        messagesOList.scrollTop = messagesOList.scrollHeight
-    }, 0)
-    page.getElementById('message-form').onsubmit = messageSubmitter(conversationId)
-    page.addEventListener('disconnect', await subscribeToMessages(messageArriver(conversationId)))
-    return page
 }
+
+customElements.define('conversation-page', ConversationPage)
+
+export default conversationId => new ConversationPage(conversationId)
 
 /**
  * @param {string} conversationId
@@ -76,13 +192,6 @@ function getMessages(conversationId, before) {
     return http.get(url)
 }
 
-/**
- * @param {MouseEvent} ev
- */
-function onBackLinkClick(ev) {
-    ev.preventDefault()
-    history.back()
-}
 
 function renderMessage(message) {
     const li = document.createElement('li')
@@ -97,76 +206,6 @@ function renderMessage(message) {
         <time>${ago(message.createdAt)}</time>
     `
     return li
-}
-
-/**
- * @param {string} conversationId
- * @returns {function(MouseEvent)}
- */
-function loadMoreClicker(conversationId) {
-    return async ev => {
-        const button = /** @type {HTMLButtonElement} */ (ev.currentTarget)
-        const before = button.dataset['before']
-
-        button.disabled = true
-        const messages = await getMessages(conversationId, before).catch(err => {
-            console.error(err)
-            return []
-        })
-        button.disabled = false
-
-        const buttonParentLI = button.parentElement
-        for (const m of messages) {
-            buttonParentLI.insertAdjacentElement('afterend', renderMessage(m))
-        }
-
-        if (messages.length !== 25) {
-            button.remove()
-            return
-        }
-
-        button.dataset['before'] = messages[24].i
-    }
-}
-
-/**
- * @param {string} conversationId
- * @returns {function(Event)}
- */
-function messageSubmitter(conversationId) {
-    return async ev => {
-        ev.preventDefault()
-        const form = /** @type {HTMLFormElement} */ (ev.currentTarget)
-        const input = form.querySelector('input')
-        const submitButton = form.querySelector('button')
-
-        input.disabled = true
-        submitButton.disabled = true
-
-        try {
-            const m = await createMessage(input.value, conversationId)
-            input.value = ''
-            const messagesOList = document.getElementById('messages')
-            if (messagesOList !== null) {
-                messagesOList.appendChild(renderMessage(m))
-                setTimeout(() => {
-                    messagesOList.scrollTop = messagesOList.scrollHeight
-                }, 0)
-            }
-        } catch (err) {
-            if (err.statusCode === 422) {
-                input.setCustomValidity(err.body.errors.content)
-            } else {
-                alert(err.message)
-            }
-        } finally {
-            input.disabled = false
-            submitButton.disabled = false
-            setTimeout(() => {
-                input.focus()
-            }, 0)
-        }
-    }
 }
 
 /**
@@ -185,31 +224,6 @@ async function subscribeToMessages(cb) {
         await loadEventSourcePolyfill()
     }
     return http.subscribe('/api/messages', cb)
-}
-
-/**
- * @param {string} conversationId
- */
-function messageArriver(conversationId) {
-    return message => {
-        flashTitle(message.content.substr(0, 20) + '...')
-
-        if (message.conversationId !== conversationId) {
-            return
-        }
-        const messagesOList = document.getElementById('messages')
-        if (messagesOList === null) {
-            return
-        }
-        const isAtTheBottom = messagesOList.scrollTop + messagesOList.clientHeight === messagesOList.scrollHeight
-        messagesOList.appendChild(renderMessage(message))
-        if (isAtTheBottom) {
-            setTimeout(() => {
-                messagesOList.scrollTop = messagesOList.scrollHeight
-            }, 0)
-        }
-        readMessages(message.conversationId)
-    }
 }
 
 /**

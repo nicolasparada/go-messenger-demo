@@ -4,6 +4,34 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messenger</title>
+    <script>
+        if (!('customElements' in window)) {
+            const src = 'https://unpkg.com/@webcomponents/custom-elements@1.1.3/custom-elements.min.js'
+            const script = document.createElement('script')
+            script.src = src
+            document.write(script.outerHTML)
+
+            const cacheStatic = async url => {
+                const res = await caches.match(url)
+                if (res) {
+                    return
+                }
+
+                const keys = await caches.keys()
+                const key = keys.find(key => key.startsWith('static-v'))
+                if (typeof key !== 'string') {
+                    return
+                }
+
+                const cache = await caches.open(key)
+                cache.add(url)
+            }
+
+            if ('serviceWorker' in navigator && 'caches' in window) {
+                cacheStatic(src)
+            }
+        }
+    </script>
     <link rel="shortcut icon" href="data:,">
     <link rel="stylesheet" href="/styles.css">
     <link rel="modulepreload" href="https://unpkg.com/@nicolasparada/router@0.6.0/router.js">
