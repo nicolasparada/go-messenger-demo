@@ -26,7 +26,7 @@ type GithubUser struct {
 
 // POST /api/login
 func login(w http.ResponseWriter, r *http.Request) {
-	if origin.Hostname() != "localhost" {
+	if !inLocalhost {
 		http.NotFound(w, r)
 		return
 	}
@@ -91,6 +91,8 @@ func githubOAuthStart(w http.ResponseWriter, r *http.Request) {
 		Value:    stateCookieValue,
 		Path:     "/api/oauth/github",
 		HttpOnly: true,
+		Secure:   !inLocalhost,
+		// SameSite: http.SameSiteLaxMode, // TODO: enable SameSite in state cookie for go 1.11.
 	})
 	http.Redirect(w, r, githubOAuthConfig.AuthCodeURL(state), http.StatusTemporaryRedirect)
 }
@@ -103,12 +105,7 @@ func githubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "state",
-		Value:    "",
-		MaxAge:   -1,
-		HttpOnly: true,
-	})
+	defer http.SetCookie(w, &http.Cookie{Name: "state", Value: "", MaxAge: -1})
 
 	var state string
 	if err = cookieSigner.Decode("state", stateCookie.Value, &state); err != nil {

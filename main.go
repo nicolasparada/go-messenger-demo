@@ -22,6 +22,7 @@ import (
 )
 
 var origin *url.URL
+var inLocalhost bool
 var db *sql.DB
 var githubOAuthConfig oauth2.Config
 var cookieSigner *securecookie.SecureCookie
@@ -44,6 +45,9 @@ func main() {
 		log.Fatal("invalid origin")
 		return
 	}
+
+	hostname := origin.Hostname()
+	inLocalhost = hostname == "localhost" || hostname == "127.0.0.1"
 
 	if i, err := strconv.Atoi(origin.Port()); err == nil {
 		port = i
