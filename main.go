@@ -86,7 +86,7 @@ func main() {
 		return
 	}
 
-	messageBus = &MessageBus{Clients: make(map[MessageClient]struct{})}
+	messageBus = &MessageBus{}
 
 	router := way.NewRouter()
 	router.HandleFunc("POST", "/api/login", requireJSON(login))
