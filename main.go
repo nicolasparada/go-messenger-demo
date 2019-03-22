@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/securecookie"
@@ -22,32 +24,30 @@ import (
 )
 
 var origin *url.URL
-var inLocalhost bool
 var db *sql.DB
 var githubOAuthConfig oauth2.Config
 var cookieSigner *securecookie.SecureCookie
 var jwtSigner jwt.Signer
-var messageBus *MessageBus
+var messageClients sync.Map
 
 func main() {
 	godotenv.Load()
 
-	port := intEnv("PORT", 3000)
-	originString := env("ORIGIN", fmt.Sprintf("http://localhost:%d/", port))
-	databaseURL := env("DATABASE_URL", "postgresql://root@127.0.0.1:26257/messenger?sslmode=disable")
-	githubClientID := os.Getenv("GITHUB_CLIENT_ID")
-	githubClientSecret := os.Getenv("GITHUB_CLIENT_SECRET")
-	hashKey := env("HASH_KEY", "secret")
-	jwtKey := env("JWT_KEY", "secret")
+	var (
+		port               = intEnv("PORT", 3000)
+		originString       = env("ORIGIN", fmt.Sprintf("http://localhost:%d/", port))
+		databaseURL        = env("DATABASE_URL", "postgresql://root@127.0.0.1:26257/messenger?sslmode=disable")
+		hashKey            = env("HASH_KEY", "supersecretkeyyoushouldnotcommit")
+		jwtKey             = env("JWT_KEY", "supersecretkeyyoushouldnotcommit")
+		githubClientID     = os.Getenv("GITHUB_CLIENT_ID")
+		githubClientSecret = os.Getenv("GITHUB_CLIENT_SECRET")
+	)
 
 	var err error
 	if origin, err = url.Parse(originString); err != nil || !origin.IsAbs() {
 		log.Fatal("invalid origin")
 		return
 	}
-
-	hostname := origin.Hostname()
-	inLocalhost = hostname == "localhost" || hostname == "127.0.0.1"
 
 	if i, err := strconv.Atoi(origin.Port()); err == nil {
 		port = i
@@ -86,7 +86,7 @@ func main() {
 		return
 	}
 
-	messageBus = &MessageBus{}
+	mime.AddExtensionType(".js", "application/javascript; charset=utf-8")
 
 	router := way.NewRouter()
 	router.HandleFunc("POST", "/api/login", requireJSON(login))
@@ -110,7 +110,7 @@ func main() {
 		Addr:              fmt.Sprintf(":%d", port),
 		Handler:           router,
 		ReadHeaderTimeout: time.Second * 5,
-		IdleTimeout:       time.Second * 30,
+		ReadTimeout:       time.Second * 10,
 	}
 
 	go func() {
