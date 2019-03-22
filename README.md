@@ -23,7 +23,7 @@ Copy the example `.env` file:
 ```
 cp .env.example .env
 ```
-Now, modify it with your own [GitHub client ID and secret](https://github.com/settings/applications/new):
+Now, modify it with your own [GitHub client ID and secret](https://github.com/settings/applications/new). In the Github page, set a callback URL like so `http://localhost:3000/api/oauth/github/callback`.
 
 Start database instance:
 ```bash
