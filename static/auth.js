@@ -47,5 +47,5 @@ export function guard(fn1, fn2) {
  * @typedef AuthUser
  * @property {string} id
  * @property {string} username
- * @property {string=} avatarUrl
+ * @property {string=} avatarURL
  */

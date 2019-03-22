@@ -1,9 +1,9 @@
 const urlRegExp = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/gi
 
 export function avatar(user) {
-    return user.avatarUrl === null
+    return user.avatarURL === null
         ? `<figure class="avatar" data-initial="${user.username[0]}"></figure>`
-        : `<img class="avatar" src="${user.avatarUrl}" alt="${user.username}'s avatar">`
+        : `<img class="avatar" src="${user.avatarURL}" alt="${user.username}'s avatar">`
 }
 
 /**
@@ -63,7 +63,6 @@ export function loadScript(src) {
 
     return new Promise((resolve, reject) => {
         script.onload = () => {
-            script.remove()
             resolve()
         }
         script.onerror = err => {
@@ -75,7 +74,7 @@ export function loadScript(src) {
 }
 
 export function loadEventSourcePolyfill() {
-    return loadScript('https://unpkg.com/event-source-polyfill@0.0.12/src/eventsource.min.js')
+    return loadScript('https://unpkg.com/event-source-polyfill@1.0.5/src/eventsource.min.js')
 }
 
 let originalTitle

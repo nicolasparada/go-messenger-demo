@@ -20,17 +20,17 @@ type Conversation struct {
 
 // POST /api/conversations
 func createConversation(w http.ResponseWriter, r *http.Request) {
-	var input struct {
+	var in struct {
 		Username string `json:"username"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
-	input.Username = strings.TrimSpace(input.Username)
-	if input.Username == "" {
+	in.Username = strings.TrimSpace(in.Username)
+	if in.Username == "" {
 		respond(w, Errors{map[string]string{
 			"username": "Username required",
 		}}, http.StatusUnprocessableEntity)
@@ -38,7 +38,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	authUserID := ctx.Value(keyAuthUserID).(string)
+	uid := ctx.Value(keyAuthUserID).(string)
 
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 	var otherParticipant User
 	if err := tx.QueryRow(`
 		SELECT id, avatar_url FROM users WHERE username = $1
-	`, input.Username).Scan(
+	`, in.Username).Scan(
 		&otherParticipant.ID,
 		&otherParticipant.AvatarURL,
 	); err == sql.ErrNoRows {
@@ -61,31 +61,31 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	otherParticipant.Username = input.Username
+	otherParticipant.Username = in.Username
 
-	if otherParticipant.ID == authUserID {
+	if otherParticipant.ID == uid {
 		http.Error(w, "Try start a conversation with someone else", http.StatusForbidden)
 		return
 	}
 
-	var conversationID string
+	var cid string
 	if err := tx.QueryRow(`
 		SELECT conversation_id FROM participants WHERE user_id = $1
 		INTERSECT
 		SELECT conversation_id FROM participants WHERE user_id = $2
-	`, authUserID, otherParticipant.ID).Scan(&conversationID); err != nil && err != sql.ErrNoRows {
+	`, uid, otherParticipant.ID).Scan(&cid); err != nil && err != sql.ErrNoRows {
 		respondError(w, fmt.Errorf("could not query common conversation id: %v", err))
 		return
 	} else if err == nil {
-		http.Redirect(w, r, "/api/conversations/"+conversationID, http.StatusFound)
+		http.Redirect(w, r, "/api/conversations/"+cid, http.StatusFound)
 		return
 	}
 
-	var conversation Conversation
+	var c Conversation
 	if err = tx.QueryRow(`
 		INSERT INTO conversations DEFAULT VALUES
 		RETURNING id
-	`).Scan(&conversation.ID); err != nil {
+	`).Scan(&c.ID); err != nil {
 		respondError(w, fmt.Errorf("could not insert conversation: %v", err))
 		return
 	}
@@ -94,7 +94,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO participants (user_id, conversation_id) VALUES
 			($1, $2),
 			($3, $2)
-	`, authUserID, conversation.ID, otherParticipant.ID); err != nil {
+	`, uid, c.ID, otherParticipant.ID); err != nil {
 		respondError(w, fmt.Errorf("could not insert participants: %v", err))
 		return
 	}
@@ -104,15 +104,15 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conversation.OtherParticipant = &otherParticipant
+	c.OtherParticipant = &otherParticipant
 
-	respond(w, conversation, http.StatusCreated)
+	respond(w, c, http.StatusCreated)
 }
 
 // GET /api/conversations?before={before}
 func getConversations(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	authUserID := ctx.Value(keyAuthUserID).(string)
+	uid := ctx.Value(keyAuthUserID).(string)
 
 	query := `
 		SELECT
@@ -134,7 +134,7 @@ func getConversations(w http.ResponseWriter, r *http.Request) {
 		INNER JOIN participants auth_user
 			ON auth_user.conversation_id = conversations.id
 				AND auth_user.user_id = $1`
-	args := []interface{}{authUserID}
+	args := []interface{}{uid}
 
 	if before := strings.TrimSpace(r.URL.Query().Get("before")); before != "" {
 		query += " WHERE conversations.id > $2"
@@ -152,29 +152,29 @@ func getConversations(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	conversations := make([]Conversation, 0)
+	cc := make([]Conversation, 0, 25)
 	for rows.Next() {
-		var conversation Conversation
-		var lastMessage Message
-		var otherParticipant User
+		var c Conversation
+		var m Message
+		var u User
 		if err = rows.Scan(
-			&conversation.ID,
-			&conversation.HasUnreadMessages,
-			&lastMessage.ID,
-			&lastMessage.Content,
-			&lastMessage.CreatedAt,
-			&lastMessage.Mine,
-			&otherParticipant.ID,
-			&otherParticipant.Username,
-			&otherParticipant.AvatarURL,
+			&c.ID,
+			&c.HasUnreadMessages,
+			&m.ID,
+			&m.Content,
+			&m.CreatedAt,
+			&m.Mine,
+			&u.ID,
+			&u.Username,
+			&u.AvatarURL,
 		); err != nil {
 			respondError(w, fmt.Errorf("could not scan conversation: %v", err))
 			return
 		}
 
-		conversation.LastMessage = &lastMessage
-		conversation.OtherParticipant = &otherParticipant
-		conversations = append(conversations, conversation)
+		c.LastMessage = &m
+		c.OtherParticipant = &u
+		cc = append(cc, c)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -182,17 +182,17 @@ func getConversations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond(w, conversations, http.StatusOK)
+	respond(w, cc, http.StatusOK)
 }
 
 // GET /api/conversations/{conversation_id}
 func getConversation(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	authUserID := ctx.Value(keyAuthUserID).(string)
-	conversationID := way.Param(ctx, "conversation_id")
+	uid := ctx.Value(keyAuthUserID).(string)
+	cid := way.Param(ctx, "conversation_id")
 
-	var conversation Conversation
-	var otherParticipant User
+	var c Conversation
+	var u User
 	if err := db.QueryRowContext(ctx, `
 		SELECT
 			COALESCE(auth_user.messages_read_at < messages.created_at, false) AS has_unread_messages,
@@ -209,11 +209,11 @@ func getConversation(w http.ResponseWriter, r *http.Request) {
 			ON auth_user.conversation_id = conversations.id
 				AND auth_user.user_id = $1
 		WHERE conversations.id = $2
-	`, authUserID, conversationID).Scan(
-		&conversation.HasUnreadMessages,
-		&otherParticipant.ID,
-		&otherParticipant.Username,
-		&otherParticipant.AvatarURL,
+	`, uid, cid).Scan(
+		&c.HasUnreadMessages,
+		&u.ID,
+		&u.Username,
+		&u.AvatarURL,
 	); err == sql.ErrNoRows {
 		http.Error(w, "Conversation not found", http.StatusNotFound)
 		return
@@ -222,8 +222,8 @@ func getConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conversation.ID = conversationID
-	conversation.OtherParticipant = &otherParticipant
+	c.ID = cid
+	c.OtherParticipant = &u
 
-	respond(w, conversation, http.StatusOK)
+	respond(w, c, http.StatusOK)
 }

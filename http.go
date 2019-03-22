@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
-var keyAuthUserID = ContextKey{"auth_user_id"}
+const keyAuthUserID = ContextKey("auth_user_id")
 
 // ContextKey used for middleware.
-type ContextKey struct {
-	Name string
-}
+type ContextKey string
 
-// SPAFileSystem file system with single-page applications support.
+// SPAFileSystem with single-page applications support.
 type SPAFileSystem struct {
-	fs http.FileSystem
+	root http.FileSystem
 }
 
 // Errors response.
@@ -26,12 +25,12 @@ type Errors struct {
 }
 
 // Open wraps http.Dir .Open() method to enable single-page applications.
-func (spa SPAFileSystem) Open(name string) (http.File, error) {
-	f, err := spa.fs.Open(name)
-	if err != nil {
-		return spa.fs.Open("index.html")
+func (fs SPAFileSystem) Open(name string) (http.File, error) {
+	f, err := fs.root.Open(name)
+	if os.IsNotExist(err) {
+		return fs.root.Open("index.html")
 	}
-	return f, nil
+	return f, err
 }
 
 func requireJSON(handler http.HandlerFunc) http.HandlerFunc {

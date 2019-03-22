@@ -1,4 +1,4 @@
-import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.6.0/router.js';
+import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.8.0/router.js';
 import { getAuthUser } from '../auth.js';
 import http from '../http.js';
 import { ago, avatar, escapeHTML, loadEventSourcePolyfill } from '../shared.js';
@@ -41,7 +41,7 @@ class HomePage extends HTMLElement {
             }
             setTimeout(() => {
                 this.usernameInput.focus()
-            }, 0)
+            })
         } finally {
             this.usernameInput.disabled = false
         }
@@ -136,7 +136,7 @@ class HomePage extends HTMLElement {
         const authUser = getAuthUser()
 
         const template = document.createElement('template')
-        template.innerHTML = /*html*/`
+        template.innerHTML = `
             <div class="container">
                 <section class="profile">
                     <div class="avatar-wrapper">
@@ -152,7 +152,7 @@ class HomePage extends HTMLElement {
                 </form>
                 <ol id="conversations" class="conversations"></ol>
                 ${showLoadMoreButton
-                ? /*html*/`<button id="load-more-button" data-before="${lastConversation.id}">Load more</button>`
+                ? `<button id="load-more-button" data-before="${lastConversation.id}">Load more</button>`
                 : ''}
             </div>
         `
@@ -213,7 +213,7 @@ function renderConversation(conversation) {
     if (conversation.hasUnreadMessages) {
         li.classList.add('has-unread-messages')
     }
-    li.innerHTML = /*html*/`
+    li.innerHTML = `
         <a href="/conversations/${conversation.id}">
             <div class="avatar-wrapper">
                 ${avatar(conversation.otherParticipant)}

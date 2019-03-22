@@ -12,8 +12,8 @@ import (
 // GET /api/conversations/{conversation_id}/other_participant
 func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	authUserID := ctx.Value(keyAuthUserID).(string)
-	conversationID := way.Param(ctx, "conversation_id")
+	uid := ctx.Value(keyAuthUserID).(string)
+	cid := way.Param(ctx, "conversation_id")
 
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
@@ -22,7 +22,7 @@ func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request)
 	}
 	defer tx.Rollback()
 
-	isParticipant, err := queryParticipantExistance(ctx, tx, authUserID, conversationID)
+	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
 		respondError(w, fmt.Errorf("could not query participant existance: %v", err))
 		return
@@ -44,7 +44,7 @@ func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request)
 		WHERE participants.user_id != $1
 			AND participants.conversation_id = $2
 		LIMIT 1
-	`, authUserID, conversationID).Scan(
+	`, uid, cid).Scan(
 		&otherUser.ID,
 		&otherUser.Username,
 		&otherUser.AvatarURL,
@@ -64,7 +64,7 @@ func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request)
 	respond(w, otherUser, http.StatusOK)
 }
 
-func queryParticipantExistance(ctx context.Context, tx *sql.Tx, userID, conversationID string) (bool, error) {
+func queryParticipantExistance(ctx context.Context, tx *sql.Tx, userID, cid string) (bool, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -72,7 +72,7 @@ func queryParticipantExistance(ctx context.Context, tx *sql.Tx, userID, conversa
 	if err := tx.QueryRowContext(ctx, `SELECT EXISTS (
 		SELECT 1 FROM participants
 		WHERE user_id = $1 AND conversation_id = $2
-	)`, userID, conversationID).Scan(&exists); err != nil {
+	)`, userID, cid).Scan(&exists); err != nil {
 		return false, err
 	}
 	return exists, nil

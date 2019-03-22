@@ -1,4 +1,4 @@
-import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.6.0/router.js';
+import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.8.0/router.js';
 import http from '../http.js';
 
 export default async function callbackPage() {

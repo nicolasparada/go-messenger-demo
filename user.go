@@ -12,7 +12,7 @@ import (
 type User struct {
 	ID        string  `json:"id"`
 	Username  string  `json:"username"`
-	AvatarURL *string `json:"avatarUrl"`
+	AvatarURL *string `json:"avatarURL"`
 }
 
 // GET /api/usernames?search={search}
@@ -26,7 +26,7 @@ func searchUsernames(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	authUserID := ctx.Value(keyAuthUserID).(string)
+	uid := ctx.Value(keyAuthUserID).(string)
 
 	rows, err := db.QueryContext(ctx, `
 		SELECT username
@@ -35,7 +35,7 @@ func searchUsernames(w http.ResponseWriter, r *http.Request) {
 			AND username ILIKE $2 || '%'
 		ORDER BY username
 		LIMIT 5
-	`, authUserID, search)
+	`, uid, search)
 	if err != nil {
 		respondError(w, fmt.Errorf("could not query usernames: %v", err))
 		return
@@ -68,13 +68,13 @@ func queryUser(ctx context.Context, rowQuerier interface {
 		ctx = context.Background()
 	}
 
-	var user User
+	var u User
 	if err := rowQuerier.QueryRowContext(ctx, `
 		SELECT username, avatar_url FROM users WHERE id = $1
-	`, id).Scan(&user.Username, &user.AvatarURL); err != nil {
-		return user, err
+	`, id).Scan(&u.Username, &u.AvatarURL); err != nil {
+		return u, err
 	}
 
-	user.ID = id
-	return user, nil
+	u.ID = id
+	return u, nil
 }

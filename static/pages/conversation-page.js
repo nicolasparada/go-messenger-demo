@@ -1,4 +1,4 @@
-import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.6.0/router.js';
+import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.8.0/router.js';
 import http from '../http.js';
 import { ago, avatar, escapeHTML, flashTitle, linkify, loadEventSourcePolyfill } from '../shared.js';
 
@@ -65,7 +65,7 @@ class ConversationPage extends HTMLElement {
                 messagesOList.appendChild(renderMessage(m))
                 setTimeout(() => {
                     messagesOList.scrollTop = messagesOList.scrollHeight
-                }, 0)
+                })
             }
         } catch (err) {
             if (err.statusCode === 422) {
@@ -78,7 +78,7 @@ class ConversationPage extends HTMLElement {
             this.messageSubmitButton.disabled = false
             setTimeout(() => {
                 this.messageInput.focus()
-            }, 0)
+            })
         }
     }
 
@@ -89,12 +89,12 @@ class ConversationPage extends HTMLElement {
             return
         }
 
-        const isAtTheBottom = this.messagesOList.scrollTop + this.messagesOList.clientHeight === this.messagesOList.scrollHeight
         this.messagesOList.appendChild(renderMessage(message))
+        const isAtTheBottom = this.messagesOList.scrollTop + this.messagesOList.clientHeight === this.messagesOList.scrollHeight
         if (isAtTheBottom) {
             setTimeout(() => {
                 this.messagesOList.scrollTop = this.messagesOList.scrollHeight
-            }, 0)
+            })
         }
         readMessages(message.conversationId)
     }
@@ -118,7 +118,7 @@ class ConversationPage extends HTMLElement {
         const lastMessage = messages[messagesLength - 1]
 
         const template = document.createElement('template')
-        template.innerHTML = /*html*/`
+        template.innerHTML = `
             <div class="chat container">
                 <div class="chat-heading">
                     <a href="/" id="back-link" class="back-link">← Back</a>
@@ -128,7 +128,7 @@ class ConversationPage extends HTMLElement {
                     </div>
                 </div>
                 <ol id="messages" class="messages">${showLoadMoreButton
-                ? /*html*/`<li class="load-more">
+                ? `<li class="load-more">
                     <button id="load-more-button" data-before="${lastMessage.id}">Load more</button>
                 </li>`
                 : ''}</ol>
@@ -159,7 +159,7 @@ class ConversationPage extends HTMLElement {
 
         setTimeout(() => {
             this.messagesOList.scrollTop = this.messagesOList.scrollHeight
-        }, 0)
+        })
     }
 
     disconnectedCallback() {
@@ -171,7 +171,7 @@ class ConversationPage extends HTMLElement {
 
 customElements.define('conversation-page', ConversationPage)
 
-export default conversationId => new ConversationPage(conversationId)
+export default params => new ConversationPage(params[0])
 
 /**
  * @param {string} conversationId
@@ -199,7 +199,7 @@ function renderMessage(message) {
     if (message.mine) {
         li.classList.add('owned')
     }
-    li.innerHTML = /*html*/`
+    li.innerHTML = `
         <div class="buble">
             <p>${linkify(escapeHTML(message.content))}</p>
         </div>

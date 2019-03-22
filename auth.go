@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/knq/jwt"
-	"github.com/matoous/go-nanoid"
+	gonanoid "github.com/matoous/go-nanoid"
 )
 
 const jwtLifetime = time.Hour * 24 * 14 // 14 days.
@@ -26,15 +26,15 @@ type GithubUser struct {
 
 // POST /api/login
 func login(w http.ResponseWriter, r *http.Request) {
-	if !inLocalhost {
+	if origin.Hostname() != "localhost" {
 		http.NotFound(w, r)
 		return
 	}
 
-	var input struct {
+	var in struct {
 		Username string `json:"username"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -45,7 +45,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		SELECT id, avatar_url
 		FROM users
 		WHERE username = $1
-	`, input.Username).Scan(
+	`, in.Username).Scan(
 		&user.ID,
 		&user.AvatarURL,
 	); err == sql.ErrNoRows {
@@ -56,7 +56,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.Username = input.Username
+	user.Username = in.Username
 
 	exp := time.Now().Add(jwtLifetime)
 	token, err := issueToken(user.ID, exp)
@@ -91,8 +91,8 @@ func githubOAuthStart(w http.ResponseWriter, r *http.Request) {
 		Value:    stateCookieValue,
 		Path:     "/api/oauth/github",
 		HttpOnly: true,
-		Secure:   !inLocalhost,
-		// SameSite: http.SameSiteLaxMode, // TODO: enable SameSite in state cookie for go 1.11.
+		Secure:   origin.Hostname() != "localhost",
+		SameSite: http.SameSiteLaxMode,
 	})
 	http.Redirect(w, r, githubOAuthConfig.AuthCodeURL(state), http.StatusTemporaryRedirect)
 }
@@ -194,9 +194,9 @@ func githubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 // GET /api/auth_user
 func getAuthUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	authUserID := ctx.Value(keyAuthUserID).(string)
+	uid := ctx.Value(keyAuthUserID).(string)
 
-	user, err := queryUser(ctx, db, authUserID)
+	u, err := queryUser(ctx, db, uid)
 	if err == sql.ErrNoRows {
 		http.Error(w, http.StatusText(http.StatusTeapot), http.StatusTeapot)
 		return
@@ -205,15 +205,15 @@ func getAuthUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond(w, user, http.StatusOK)
+	respond(w, u, http.StatusOK)
 }
 
 // POST /api/refresh_token
 func refreshToken(w http.ResponseWriter, r *http.Request) {
-	authUserID := r.Context().Value(keyAuthUserID).(string)
+	uid := r.Context().Value(keyAuthUserID).(string)
 
 	exp := time.Now().Add(jwtLifetime)
-	token, err := issueToken(authUserID, exp)
+	token, err := issueToken(uid, exp)
 	if err != nil {
 		respondError(w, fmt.Errorf("could not issue token: %v", err))
 		return
