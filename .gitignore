@@ -2,4 +2,3 @@ cockroach-data
 vendor
 .env
 *.exe
-*.http
