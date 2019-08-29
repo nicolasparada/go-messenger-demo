@@ -91,7 +91,7 @@ func githubOAuthStart(w http.ResponseWriter, r *http.Request) {
 		Value:    stateCookieValue,
 		Path:     "/api/oauth/github",
 		HttpOnly: true,
-		Secure:   origin.Hostname() != "localhost",
+		Secure:   r.TLS != nil,
 		SameSite: http.SameSiteLaxMode,
 	})
 	http.Redirect(w, r, githubOAuthConfig.AuthCodeURL(state), http.StatusTemporaryRedirect)
@@ -105,7 +105,7 @@ func githubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer http.SetCookie(w, &http.Cookie{Name: "state", Value: "", MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: "state", Value: "", MaxAge: -1})
 
 	var state string
 	if err = cookieSigner.Decode("state", stateCookie.Value, &state); err != nil {
