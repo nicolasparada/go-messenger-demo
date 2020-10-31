@@ -2,3 +2,4 @@ cockroach-data
 vendor
 .env
 *.exe
+go-messenger-demo
