@@ -55,7 +55,7 @@ func respond(w http.ResponseWriter, v interface{}, statusCode int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
 	if _, err := w.Write(b); err != nil && !errors.Is(err, context.Canceled) {
-		log.Printf("could not write http response: %w", err)
+		log.Printf("could not write http response: %v\n", err)
 	}
 }
 
