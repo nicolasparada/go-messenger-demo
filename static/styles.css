@@ -272,3 +272,22 @@ figure.avatar::after {
     width: 100%;
     margin-right: .5rem;
 }
+
+.loader {
+    display: block;
+    text-align: center;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    opacity: 0;
+    will-change: opacity;
+    animation: fadein 200ms linear 180ms forwards;
+}
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

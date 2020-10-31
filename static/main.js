@@ -17,8 +17,9 @@ function view(pageName) {
 }
 
 async function render(resultPromise) {
-    document.body.innerHTML = ''
+    document.body.innerHTML = '<div class="loader">Loading... Please wait ⏳</div>'
     const result = await resultPromise
+    document.body.innerHTML = ''
     if (result instanceof Node) {
         document.body.appendChild(result)
     }
