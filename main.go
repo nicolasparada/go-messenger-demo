@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/gorilla/securecookie"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
 	"github.com/kenshaw/jwt"
-	_ "github.com/lib/pq"
 	"github.com/matryer/way"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
