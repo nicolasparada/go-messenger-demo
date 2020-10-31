@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -47,11 +46,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			log.Printf("failed to rollback conversation creation: %v\n", err)
-		}
-	}()
+	defer func() { _ = tx.Rollback() }()
 
 	var otherParticipant User
 	if err := tx.QueryRow(`

@@ -67,11 +67,7 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			log.Printf("failed to rollback message creation: %v\n", err)
-		}
-	}()
+	defer func() { _ = tx.Rollback() }()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
@@ -171,11 +167,8 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			log.Printf("failed to rollback messages retrieval: %v\n", err)
-		}
-	}()
+
+	defer func() { _ = tx.Rollback() }()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
