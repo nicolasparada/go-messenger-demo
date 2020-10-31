@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/knq/jwt"
+	"github.com/kenshaw/jwt"
 	gonanoid "github.com/matoous/go-nanoid"
 )
 

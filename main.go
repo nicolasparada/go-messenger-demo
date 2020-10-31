@@ -16,7 +16,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/joho/godotenv"
-	"github.com/knq/jwt"
+	"github.com/kenshaw/jwt"
 	_ "github.com/lib/pq"
 	"github.com/matryer/way"
 	"golang.org/x/oauth2"
