@@ -1,6 +1,5 @@
 import { createRouter } from 'https://unpkg.com/@nicolasparada/router@0.8.0/router.js';
 import { guard } from './auth.js';
-import { importWithCache } from './dynamic-import.js';
 
 const viewAccess = location.hostname === 'localhost' ? view('dev-access') : view('access')
 
@@ -23,4 +22,15 @@ async function render(resultPromise) {
     if (result instanceof Node) {
         document.body.appendChild(result)
     }
+}
+
+const modulesCache = new Map()
+async function importWithCache(specifier) {
+    if (modulesCache.has(specifier)) {
+        return modulesCache.get(specifier)
+    }
+
+    const m = await import(specifier)
+    modulesCache.set(specifier, m)
+    return m
 }
