@@ -63,6 +63,10 @@ button {
     outline: none;
 }
 
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
 a {
     color: var(--accent-color);
 }
