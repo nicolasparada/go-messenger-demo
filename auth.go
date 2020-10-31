@@ -178,13 +178,11 @@ func githubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiresAt, _ := exp.MarshalText()
-
 	data := make(url.Values)
 	data.Set("token", token)
-	data.Set("expires_at", string(expiresAt))
+	data.Set("expires_at", exp.Format(time.RFC3339Nano))
 
-	callbackURL := *origin
+	callbackURL := cloneURL(origin)
 	callbackURL.Path = "/callback"
 	callbackURL.RawQuery = data.Encode()
 

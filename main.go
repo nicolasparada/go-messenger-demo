@@ -68,7 +68,7 @@ func main() {
 		return
 	}
 
-	githubRedirectURL := *origin
+	githubRedirectURL := cloneURL(origin)
 	githubRedirectURL.Path = "/api/oauth/github/callback"
 	githubOAuthConfig = oauth2.Config{
 		ClientID:     githubClientID,
@@ -149,4 +149,17 @@ func intEnv(key string, fallbackValue int) int {
 		return fallbackValue
 	}
 	return i
+}
+
+func cloneURL(u *url.URL) *url.URL {
+	if u == nil {
+		return nil
+	}
+	u2 := new(url.URL)
+	*u2 = *u
+	if u.User != nil {
+		u2.User = new(url.Userinfo)
+		*u2.User = *u.User
+	}
+	return u2
 }
