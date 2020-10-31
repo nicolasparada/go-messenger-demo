@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/matryer/way"
@@ -20,7 +21,12 @@ func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request)
 		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			log.Printf("failed to rollback other participants from conversation retrieval: %v\n", err)
+		}
+	}()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {

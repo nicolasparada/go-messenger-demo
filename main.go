@@ -31,7 +31,7 @@ var jwtSigner jwt.Signer
 var messageClients sync.Map
 
 func main() {
-	godotenv.Load()
+	_ = godotenv.Load()
 
 	var (
 		port               = intEnv("PORT", 3000)
@@ -86,7 +86,10 @@ func main() {
 		return
 	}
 
-	mime.AddExtensionType(".js", "application/javascript; charset=utf-8")
+	if err := mime.AddExtensionType(".js", "application/javascript; charset=utf-8"); err != nil {
+		log.Fatalf("could not register javascript mimetype: %v\n", err)
+		return
+	}
 
 	router := way.NewRouter()
 	router.HandleFunc("POST", "/api/login", requireJSON(login))

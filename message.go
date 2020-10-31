@@ -15,7 +15,7 @@ import (
 	"github.com/matryer/way"
 )
 
-var rxSpaces = regexp.MustCompile("\\s+")
+var rxSpaces = regexp.MustCompile(`\s+`)
 
 // Message model.
 type Message struct {
@@ -66,7 +66,12 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			log.Printf("failed to rollback message creation: %v\n", err)
+		}
+	}()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
@@ -106,7 +111,7 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		if err = updateMessagesReadAt(nil, uid, cid); err != nil {
+		if err = updateMessagesReadAt(context.Background(), uid, cid); err != nil {
 			log.Printf("could not update messages read at: %v\n", err)
 		}
 	}()
@@ -115,7 +120,11 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 	m.UserID = uid
 	m.ConversationID = cid
 
-	go messageCreated(m)
+	go func() {
+		if err := messageCreated(m); err != nil {
+			log.Printf("failed to do message created afterwork: %v\n", err)
+		}
+	}()
 
 	m.Mine = true
 
@@ -162,7 +171,11 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			log.Printf("failed to rollback messages retrieval: %v\n", err)
+		}
+	}()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
@@ -228,7 +241,7 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		if err = updateMessagesReadAt(nil, uid, cid); err != nil {
+		if err = updateMessagesReadAt(context.Background(), uid, cid); err != nil {
 			log.Printf("could not update messages read at: %v\n", err)
 		}
 	}()
