@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messenger</title>
     <script>
         if (!('customElements' in window)) {
-            const src = 'https://unpkg.com/@webcomponents/custom-elements@1.2.1/custom-elements.min.js'
+            const src = 'https://unpkg.com/@webcomponents/custom-elements@1.4.3/custom-elements.min.js'
             const script = document.createElement('script')
             script.src = src
             document.write(script.outerHTML)
@@ -36,8 +37,7 @@
     <link rel="stylesheet" href="/styles.css">
     <link rel="modulepreload" href="https://unpkg.com/@nicolasparada/router@0.8.0/router.js">
     <link rel="modulepreload" href="/auth.js">
-    <link rel="modulepreload" href="/dynamic-import.js">
-    <script src="https://unpkg.com/focus-visible@4.1.5/dist/focus-visible.min.js" defer></script>
+    <script src="https://unpkg.com/focus-visible@5.2.0/dist/focus-visible.min.js" defer></script>
     <script src="/main.js" type="module"></script>
     <script>
         const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname)
@@ -48,5 +48,7 @@
         }
     </script>
 </head>
+
 <body></body>
+
 </html>
