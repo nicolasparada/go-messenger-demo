@@ -27,7 +27,7 @@ Now, modify it with your own [GitHub client ID and secret](https://github.com/se
 
 Start database instance:
 ```bash
-cockroach start --insecure --host 127.0.0.1
+cockroach start-single-node --insecure --host 127.0.0.1
 ```
 
 Create database schema, build and run:
