@@ -2,6 +2,9 @@ import { navigate } from 'https://unpkg.com/@nicolasparada/router@0.8.0/router.j
 import http from '../http.js';
 import { ago, avatar, escapeHTML, flashTitle, linkify, loadEventSourcePolyfill } from '../shared.js';
 
+// ConversationPage is a custom element
+// so it takes advantage of disconnectedCallback
+// to unsubscribe from the messages.
 class ConversationPage extends HTMLElement {
     /**
      * @param {string} conversationId

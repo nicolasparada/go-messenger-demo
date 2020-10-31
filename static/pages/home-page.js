@@ -3,6 +3,9 @@ import { getAuthUser } from '../auth.js';
 import http from '../http.js';
 import { ago, avatar, escapeHTML, loadEventSourcePolyfill } from '../shared.js';
 
+// HomePage is a custom element
+// so it takes advantage of disconnectedCallback
+// to unsubscribe from the messages.
 class HomePage extends HTMLElement {
     constructor() {
         super()
