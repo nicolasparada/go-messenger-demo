@@ -3,13 +3,16 @@ import http from '../http.js';
 
 export default async function callbackPage() {
     const url = new URL(location.toString())
-    const token = url.searchParams.get('token')
-    const expiresAt = url.searchParams.get('expires_at')
+    let token = url.searchParams.get('token')
+    let expiresAt = url.searchParams.get('expires_at')
 
     try {
         if (token === null || expiresAt === null) {
             throw new Error('Invalid URL')
         }
+
+        token = decodeURIComponent(token)
+        expiresAt = decodeURIComponent(expiresAt)
 
         const authUser = await getAuthUser(token)
 
