@@ -58,7 +58,7 @@ func main() {
 		return
 	}
 
-	if db, err = sql.Open("postgres", databaseURL); err != nil {
+	if db, err = sql.Open("pgx", databaseURL); err != nil {
 		log.Fatalf("could not open database connection: %v\n", err)
 		return
 	}
