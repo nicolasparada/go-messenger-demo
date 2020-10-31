@@ -49,7 +49,7 @@ func requireJSON(handler http.HandlerFunc) http.HandlerFunc {
 func respond(w http.ResponseWriter, v interface{}, statusCode int) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not marshal response: %v", err))
+		respondError(w, fmt.Errorf("could not marshal response: %w", err))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -42,7 +42,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not begin tx: %v", err))
+		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
 	defer tx.Rollback()
@@ -57,7 +57,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		respondError(w, fmt.Errorf("could not query other participant: %v", err))
+		respondError(w, fmt.Errorf("could not query other participant: %w", err))
 		return
 	}
 
@@ -74,7 +74,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 		INTERSECT
 		SELECT conversation_id FROM participants WHERE user_id = $2
 	`, uid, otherParticipant.ID).Scan(&cid); err != nil && err != sql.ErrNoRows {
-		respondError(w, fmt.Errorf("could not query common conversation id: %v", err))
+		respondError(w, fmt.Errorf("could not query common conversation id: %w", err))
 		return
 	} else if err == nil {
 		http.Redirect(w, r, "/api/conversations/"+cid, http.StatusFound)
@@ -86,7 +86,7 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO conversations DEFAULT VALUES
 		RETURNING id
 	`).Scan(&c.ID); err != nil {
-		respondError(w, fmt.Errorf("could not insert conversation: %v", err))
+		respondError(w, fmt.Errorf("could not insert conversation: %w", err))
 		return
 	}
 
@@ -95,12 +95,12 @@ func createConversation(w http.ResponseWriter, r *http.Request) {
 			($1, $2),
 			($3, $2)
 	`, uid, c.ID, otherParticipant.ID); err != nil {
-		respondError(w, fmt.Errorf("could not insert participants: %v", err))
+		respondError(w, fmt.Errorf("could not insert participants: %w", err))
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		respondError(w, fmt.Errorf("could not commit tx to create conversation: %v", err))
+		respondError(w, fmt.Errorf("could not commit tx to create conversation: %w", err))
 		return
 	}
 
@@ -147,7 +147,7 @@ func getConversations(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not query conversations: %v", err))
+		respondError(w, fmt.Errorf("could not query conversations: %w", err))
 		return
 	}
 	defer rows.Close()
@@ -168,7 +168,7 @@ func getConversations(w http.ResponseWriter, r *http.Request) {
 			&u.Username,
 			&u.AvatarURL,
 		); err != nil {
-			respondError(w, fmt.Errorf("could not scan conversation: %v", err))
+			respondError(w, fmt.Errorf("could not scan conversation: %w", err))
 			return
 		}
 
@@ -178,7 +178,7 @@ func getConversations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = rows.Err(); err != nil {
-		respondError(w, fmt.Errorf("could not iterate over conversations: %v", err))
+		respondError(w, fmt.Errorf("could not iterate over conversations: %w", err))
 		return
 	}
 
@@ -218,7 +218,7 @@ func getConversation(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Conversation not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		respondError(w, fmt.Errorf("could not query conversation: %v", err))
+		respondError(w, fmt.Errorf("could not query conversation: %w", err))
 		return
 	}
 

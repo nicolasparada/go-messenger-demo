@@ -37,7 +37,7 @@ func searchUsernames(w http.ResponseWriter, r *http.Request) {
 		LIMIT 5
 	`, uid, search)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not query usernames: %v", err))
+		respondError(w, fmt.Errorf("could not query usernames: %w", err))
 		return
 	}
 	defer rows.Close()
@@ -46,7 +46,7 @@ func searchUsernames(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var username string
 		if err = rows.Scan(&username); err != nil {
-			respondError(w, fmt.Errorf("could not scan username: %v", err))
+			respondError(w, fmt.Errorf("could not scan username: %w", err))
 			return
 		}
 
@@ -54,7 +54,7 @@ func searchUsernames(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = rows.Err(); err != nil {
-		respondError(w, fmt.Errorf("could not iterate over usernames: %v", err))
+		respondError(w, fmt.Errorf("could not iterate over usernames: %w", err))
 		return
 	}
 

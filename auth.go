@@ -52,7 +52,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		respondError(w, fmt.Errorf("could not query user: %v", err))
+		respondError(w, fmt.Errorf("could not query user: %w", err))
 		return
 	}
 
@@ -61,7 +61,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	exp := time.Now().Add(jwtLifetime)
 	token, err := issueToken(user.ID, exp)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not create token: %v", err))
+		respondError(w, fmt.Errorf("could not create token: %w", err))
 		return
 	}
 
@@ -76,13 +76,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 func githubOAuthStart(w http.ResponseWriter, r *http.Request) {
 	state, err := gonanoid.Nanoid()
 	if err != nil {
-		respondError(w, fmt.Errorf("could not generte state: %v", err))
+		respondError(w, fmt.Errorf("could not generte state: %w", err))
 		return
 	}
 
 	stateCookieValue, err := cookieSigner.Encode("state", state)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not encode state cookie: %v", err))
+		respondError(w, fmt.Errorf("could not encode state cookie: %w", err))
 		return
 	}
 
@@ -124,27 +124,27 @@ func githubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	t, err := githubOAuthConfig.Exchange(ctx, q.Get("code"))
 	if err != nil {
-		respondError(w, fmt.Errorf("could not fetch github token: %v", err))
+		respondError(w, fmt.Errorf("could not fetch github token: %w", err))
 		return
 	}
 
 	client := githubOAuthConfig.Client(ctx, t)
 	resp, err := client.Get("https://api.github.com/user")
 	if err != nil {
-		respondError(w, fmt.Errorf("could not fetch github user: %v", err))
+		respondError(w, fmt.Errorf("could not fetch github user: %w", err))
 		return
 	}
 
 	var githubUser GithubUser
 	if err = json.NewDecoder(resp.Body).Decode(&githubUser); err != nil {
-		respondError(w, fmt.Errorf("could not decode github user: %v", err))
+		respondError(w, fmt.Errorf("could not decode github user: %w", err))
 		return
 	}
 	defer resp.Body.Close()
 
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not begin tx: %v", err))
+		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
 
@@ -156,25 +156,25 @@ func githubOAuthCallback(w http.ResponseWriter, r *http.Request) {
 			INSERT INTO users (username, avatar_url, github_id) VALUES ($1, $2, $3)
 			RETURNING id
 		`, githubUser.Login, githubUser.AvatarURL, githubUser.ID).Scan(&user.ID); err != nil {
-			respondError(w, fmt.Errorf("could not insert user: %v", err))
+			respondError(w, fmt.Errorf("could not insert user: %w", err))
 			return
 		}
 		user.Username = githubUser.Login
 		user.AvatarURL = githubUser.AvatarURL
 	} else if err != nil {
-		respondError(w, fmt.Errorf("could not query user by github ID: %v", err))
+		respondError(w, fmt.Errorf("could not query user by github ID: %w", err))
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		respondError(w, fmt.Errorf("could not commit to finish github oauth: %v", err))
+		respondError(w, fmt.Errorf("could not commit to finish github oauth: %w", err))
 		return
 	}
 
 	exp := time.Now().Add(jwtLifetime)
 	token, err := issueToken(user.ID, exp)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not issue token: %v", err))
+		respondError(w, fmt.Errorf("could not issue token: %w", err))
 		return
 	}
 
@@ -199,7 +199,7 @@ func getAuthUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusTeapot), http.StatusTeapot)
 		return
 	} else if err != nil {
-		respondError(w, fmt.Errorf("could not query auth user: %v", err))
+		respondError(w, fmt.Errorf("could not query auth user: %w", err))
 		return
 	}
 
@@ -213,7 +213,7 @@ func refreshToken(w http.ResponseWriter, r *http.Request) {
 	exp := time.Now().Add(jwtLifetime)
 	token, err := issueToken(uid, exp)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not issue token: %v", err))
+		respondError(w, fmt.Errorf("could not issue token: %w", err))
 		return
 	}
 

@@ -17,14 +17,14 @@ func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request)
 
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
-		respondError(w, fmt.Errorf("could not begin tx: %v", err))
+		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
 	defer tx.Rollback()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not query participant existance: %v", err))
+		respondError(w, fmt.Errorf("could not query participant existance: %w", err))
 		return
 	}
 
@@ -52,12 +52,12 @@ func getOtherParticipantFromConversation(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Could not find the other participant of this conversation", http.StatusNotFound)
 		return
 	} else if err != nil {
-		respondError(w, fmt.Errorf("could not query other participant from conversation: %v", err))
+		respondError(w, fmt.Errorf("could not query other participant from conversation: %w", err))
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		respondError(w, fmt.Errorf("could not commit tx to get other participant from conversation: %v", err))
+		respondError(w, fmt.Errorf("could not commit tx to get other participant from conversation: %w", err))
 		return
 	}
 

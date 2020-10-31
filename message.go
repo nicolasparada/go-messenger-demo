@@ -63,14 +63,14 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not begin tx: %v", err))
+		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
 	defer tx.Rollback()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not query participant existance: %v", err))
+		respondError(w, fmt.Errorf("could not query participant existance: %w", err))
 		return
 	}
 
@@ -88,7 +88,7 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 		&m.ID,
 		&m.CreatedAt,
 	); err != nil {
-		respondError(w, fmt.Errorf("could not insert message: %v", err))
+		respondError(w, fmt.Errorf("could not insert message: %w", err))
 		return
 	}
 
@@ -96,12 +96,12 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 		UPDATE conversations SET last_message_id = $1
 		WHERE id = $2
 	`, m.ID, cid); err != nil {
-		respondError(w, fmt.Errorf("could not update conversation last message ID: %v", err))
+		respondError(w, fmt.Errorf("could not update conversation last message ID: %w", err))
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		respondError(w, fmt.Errorf("could not commit tx to create a message: %v", err))
+		respondError(w, fmt.Errorf("could not commit tx to create a message: %w", err))
 		return
 	}
 
@@ -159,14 +159,14 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
-		respondError(w, fmt.Errorf("could not begin tx: %v", err))
+		respondError(w, fmt.Errorf("could not begin tx: %w", err))
 		return
 	}
 	defer tx.Rollback()
 
 	isParticipant, err := queryParticipantExistance(ctx, tx, uid, cid)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not query participant existance: %v", err))
+		respondError(w, fmt.Errorf("could not query participant existance: %w", err))
 		return
 	}
 
@@ -196,7 +196,7 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
-		respondError(w, fmt.Errorf("could not query messages: %v", err))
+		respondError(w, fmt.Errorf("could not query messages: %w", err))
 		return
 	}
 	defer rows.Close()
@@ -210,7 +210,7 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 			&message.CreatedAt,
 			&message.Mine,
 		); err != nil {
-			respondError(w, fmt.Errorf("could not scan message: %v", err))
+			respondError(w, fmt.Errorf("could not scan message: %w", err))
 			return
 		}
 
@@ -218,12 +218,12 @@ func getMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = rows.Err(); err != nil {
-		respondError(w, fmt.Errorf("could not iterate over messages: %v", err))
+		respondError(w, fmt.Errorf("could not iterate over messages: %w", err))
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		respondError(w, fmt.Errorf("could not commit tx to get messages: %v", err))
+		respondError(w, fmt.Errorf("could not commit tx to get messages: %w", err))
 		return
 	}
 
@@ -286,7 +286,7 @@ func readMessages(w http.ResponseWriter, r *http.Request) {
 	cid := way.Param(ctx, "conversation_id")
 
 	if err := updateMessagesReadAt(ctx, uid, cid); err != nil {
-		respondError(w, fmt.Errorf("could not update messages read at: %v", err))
+		respondError(w, fmt.Errorf("could not update messages read at: %w", err))
 		return
 	}
 
